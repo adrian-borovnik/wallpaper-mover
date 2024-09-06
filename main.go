@@ -3,8 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
+	"path/filepath"
+	"regexp"
 )
 
 type MoveConfig struct {
@@ -52,20 +53,42 @@ func MoveFile(source string, destination string) error {
 }
 
 func MoveFiles(config MoveConfig) error {
+	entries, err := os.ReadDir(config.Source)
+	if err != nil {
+		return err
+	}
+
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+
+		fileName := e.Name()
+		r, _ := regexp.Compile(config.Pattern)
+
+		if !r.MatchString(fileName) {
+			continue
+		}
+
+		sourcePath := filepath.Join(config.Source, fileName)
+		destinationPath := filepath.Join(config.Destination, fileName)
+		err := MoveFile(sourcePath, destinationPath)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 func main() {
-	fmt.Println("Zdravo!")
-
 	config := MoveConfig{
-		Source:      "~/Downloads/",
-		Destination: "~/Wallpapers",
-		Pattern:     "*unsplash*.jpg",
+		Source:      "/Users/adrianborovnik/Downloads",
+		Destination: "/Users/adrianborovnik/Wallpapers",
+		Pattern:     ".*unsplash.*\\.jpg",
 	}
 
 	if err := MoveFiles(config); err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
 	}
-
 }
