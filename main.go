@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -26,10 +27,10 @@ func MoveFile(source string, destination string) error {
 		return err
 	}
 
-	flag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-	perm := fi.Mode() & os.ModePerm
+	fileFlag := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	filePerm := fi.Mode() & os.ModePerm
 
-	destinationFile, err := os.OpenFile(destination, flag, perm)
+	destinationFile, err := os.OpenFile(destination, fileFlag, filePerm)
 	if err != nil {
 		return fmt.Errorf("could not create destination file: %v", err)
 	}
@@ -72,7 +73,7 @@ func MoveFiles(config MoveConfig) error {
 
 		sourcePath := filepath.Join(config.Source, fileName)
 		destinationPath := filepath.Join(config.Destination, fileName)
-		err := MoveFile(sourcePath, destinationPath)
+		err = MoveFile(sourcePath, destinationPath)
 		if err != nil {
 			return err
 		}
@@ -82,10 +83,16 @@ func MoveFiles(config MoveConfig) error {
 }
 
 func main() {
+	sourcePtr := flag.String("src", "/Users/adrianborovnik/Downloads", "file path of a source folder")
+	destinationPtr := flag.String("dest", "/Users/adrianborovnik/Wallpapers", "file path of a destination folder")
+	patternPtr := flag.String("pattern", ".*unsplash.*\\.jpg", "regex pattern for selecting right files")
+
+	flag.Parse()
+
 	config := MoveConfig{
-		Source:      "/Users/adrianborovnik/Downloads",
-		Destination: "/Users/adrianborovnik/Wallpapers",
-		Pattern:     ".*unsplash.*\\.jpg",
+		Source:      *sourcePtr,
+		Destination: *destinationPtr,
+		Pattern:     *patternPtr,
 	}
 
 	if err := MoveFiles(config); err != nil {
